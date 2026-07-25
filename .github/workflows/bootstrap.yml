@@ -1,27 +1,43 @@
-name: Bootstrap implementation
+name: Materialize implementation
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   implement:
-    if: contains(github.event.head_commit.message, '[bootstrap-zoro-gateways]') || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.head_commit.message, '[materialize-zoro-gateways]') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Materialize implementation
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Reconstruct and validate implementation archive
         shell: bash
         run: |
           set -euo pipefail
-          cat .bootstrap/part-* | base64 --decode > /tmp/zoro-implementation.tgz
+          cat .payload/part-* | base64 --decode > /tmp/zoro-implementation.tgz
+          tar -tzf /tmp/zoro-implementation.tgz >/dev/null
           tar -xzf /tmp/zoro-implementation.tgz -C .
-          rm -rf .bootstrap .github/workflows/bootstrap.yml
-      - name: Commit implementation
+          rm -rf .payload .bootstrap .github/workflows/bootstrap.yml
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Verify implementation
+        run: npm run ci
+
+      - name: Commit verified implementation
         shell: bash
         run: |
           set -euo pipefail
