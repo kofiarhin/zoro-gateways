@@ -1,0 +1,39 @@
+name: Bootstrap implementation
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  implement:
+    if: contains(github.event.head_commit.message, '[bootstrap-zoro-gateways]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Materialize implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/part-* | base64 --decode > /tmp/zoro-implementation.tgz
+          tar -xzf /tmp/zoro-implementation.tgz -C .
+          rm -rf .bootstrap .github/workflows/bootstrap.yml
+      - name: Install and verify
+        run: |
+          npm install --ignore-scripts
+          npm run ci
+          sed -i 's/npm install --ignore-scripts/npm ci --ignore-scripts/' .github/workflows/ci.yml
+      - name: Commit verified implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: implement Zoro gateway platform'
+          git push origin HEAD:main
