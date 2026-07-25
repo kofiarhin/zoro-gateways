@@ -4,13 +4,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
 
 permissions:
   contents: write
 
 jobs:
   implement:
-    if: contains(github.event.head_commit.message, '[materialize-zoro-gateways]') || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.head_commit.message, '[materialize-zoro-gateways]') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -46,5 +48,3 @@ jobs:
           git add -A
           git commit -m 'feat: implement Zoro gateway platform'
           git push origin HEAD:main
-
-# complete payload retry 3
